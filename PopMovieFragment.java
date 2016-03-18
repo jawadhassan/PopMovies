@@ -36,15 +36,14 @@ public class PopMovieFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_main, container, false);
-    }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        View view = inflater.inflate(R.layout.fragment_main,container,false);
 
-        GridView gridView = (GridView) getActivity().findViewById(R.id.gridview);
-        gridView.setAdapter(new ImageAdapter(getContext()));
+        GridView gridView = (GridView) view.findViewById(R.id.gridview);
+
+        ImageAdapter imageAdapter = new ImageAdapter(getActivity());
+
+        gridView.setAdapter(imageAdapter);
 
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -52,6 +51,15 @@ public class PopMovieFragment extends Fragment {
                 Log.v("check","ok");
             }
         });
+
+        return inflater.inflate(R.layout.fragment_main, container, false);
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+
 
     }
     @Override
@@ -182,7 +190,7 @@ public class PopMovieFragment extends Fragment {
 
             try {
                 // here will be method call for JSon parsing.
-                getMovieImageFromJson(movieJsonStr);
+                return getMovieImageFromJson(movieJsonStr);
 
 
             }catch (JSONException e){
