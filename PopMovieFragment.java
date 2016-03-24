@@ -1,5 +1,6 @@
 package com.example.android.popmovies;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -8,6 +9,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -25,7 +33,7 @@ import java.util.ArrayList;
  * A placeholder fragment containing a simple view.
  */
 public class PopMovieFragment extends Fragment {
-
+    ImageAdapter  imageAdapter;
     public PopMovieFragment() {
     }
 
@@ -33,20 +41,20 @@ public class PopMovieFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-//        View view = inflater.inflate(R.layout.fragment_main,container,false);
-//
-//        GridView gridView = (GridView) view.findViewById(R.id.gridview);
-//
-//        ImageAdapter imageAdapter = new ImageAdapter(getActivity());
-//
-//        gridView.setAdapter(imageAdapter);
+       View view = inflater.inflate(R.layout.fragment_main,container,false);
 
-////        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-////            @Override
-////            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                Log.v("check","ok");
-//            }
-//        });
+        GridView gridView = (GridView) view.findViewById(R.id.gridview);
+
+        imageAdapter = new ImageAdapter(getActivity(),new ArrayList<URL>());
+
+        gridView.setAdapter(imageAdapter);
+
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+               // Log.v("check","ok");
+            }
+        });
 
         return inflater.inflate(R.layout.fragment_main, container, false);
     }
@@ -194,6 +202,7 @@ public class PopMovieFragment extends Fragment {
                 for (String items : check_items){
                     Log.v(LOG_TAG,items+"new");
                 }
+                return  check_items;
 
             } catch (JSONException e) {
                 Log.e(LOG_TAG, e.getMessage(), e);
@@ -202,58 +211,118 @@ public class PopMovieFragment extends Fragment {
             return null;
 
         }
+
+        @Override
+        protected void onPostExecute(String[] result) {
+
+            if (result != null) {
+
+
+                for (String resultItems : result){
+                  try {
+                      //Log.v(LOG_TAG, resultItems + "GoodLuck");
+                      final String PICTURE_BASE_URL = "http://image.tmdb.org/t/p/w185/";
+                      final String PICTURE_URL_END = resultItems;
+                      Uri builtUri = Uri.parse(PICTURE_BASE_URL).buildUpon()
+                              .appendPath(PICTURE_URL_END.replace("/", ""))
+                              .build();
+
+                      imageAdapter.setmresultItems(new URL(builtUri.toString()));
+                      Log.v(LOG_TAG, resultItems + "GoodLuck" + builtUri.toString());
+
+                  }catch (MalformedURLException ex){
+                      //Log.e(LOG_TAG, "onPostExecute: " );
+                  }
+                }
+
+                imageAdapter.notifyDataSetChanged();
+            }
+        }
+
     }
 }
 
 
 
-//public  class ImageAdapter extends BaseAdapter{
-//
-//        private Context mContext;
-//
-//        public ImageAdapter(Context c){
-//            mContext = c;
-//
-//        }
-//
-//        public int getCount(){
-//            return mThumbsIds.length;
-//        }
-//
-//        public Object getItem(int position){
-//            return  null;
-//        }
-//
-//        public long getItemId(int position){
-//            return  0;
-//        }
-//
-//        @Override
-//        public View getView(int position, View convertView, ViewGroup parent) {
-//            ImageView imageView;
-//            if (convertView == null){
-////            if it is not recycled, initialize some attributes
-//                imageView = new ImageView(mContext);
-//                imageView.setLayoutParams(new GridView.LayoutParams(85,85));
-//                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-//                imageView.setPadding(8,8,8,8);
-//
-//            }else{
-//                imageView = (ImageView) convertView;
-//            }
-//            imageView.setImageResource(mThumbsIds[position]);
-//            return  imageView;
-//        }
-//
-//        //references to our Images
-//        private Integer[] mThumbsIds = {
-//
-//        };
-//
-//
-//
-//
-//}
+class ImageAdapter extends BaseAdapter {
+
+        private Context mContext;
+        private ArrayList<URL> mresultItems;
+
+
+
+
+        public ImageAdapter(Context c,ArrayList<URL> resultItems){
+            mContext = c;
+            mresultItems = resultItems;
+
+        }
+
+        public int getCount(){
+           // return mThumbsIds.length;
+            return  mresultItems.size();
+        }
+
+        public URL getItem(int position){
+            return mresultItems.get(position);
+
+
+            //return  null;
+        }
+
+        public long getItemId(int position){
+            return  0;
+        }
+
+
+    public void setmresultItems(URL resultItems ){
+                mresultItems.add(resultItems);
+                Log.v("check", mresultItems.toString());
+
+    }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ImageView imageView;
+
+            if (convertView == null){
+//            if it is not recycled, initialize some attributes
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(85,85));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8,8,8,8);
+
+            }else{
+                imageView = (ImageView) convertView;
+            }
+            //imageView.setImageResource(mThumbsIds[position]);
+            //Log.v("AgainCheck", mresultItems.toString() + "again");
+            URL picUrl =getItem(position);
+
+                Picasso.with(mContext).load(picUrl.toString())
+                        .placeholder(R.drawable.user_placeholder)
+                        .error(R.drawable.user_placeholder_error)
+
+
+                        .into(imageView);
+
+
+
+
+            return  imageView;
+        }
+
+
+
+        //references to our Images
+
+        //private Integer[] mThumbsIds ;
+
+
+
+
+
+}
 
 
 
