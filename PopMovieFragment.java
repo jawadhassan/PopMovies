@@ -14,6 +14,7 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -52,11 +53,12 @@ public class PopMovieFragment extends Fragment {
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-               // Log.v("check","ok");
+                Log.v("check","ok");
             }
         });
 
-        return inflater.inflate(R.layout.fragment_main, container, false);
+       // return inflater.inflate(R.layout.fragment_main, container, false);
+        return view;
     }
 
     @Override
@@ -98,10 +100,10 @@ public class PopMovieFragment extends Fragment {
                     JSONObject movieObject = movieArray.getJSONObject(i);
                     posterUrl = movieObject.getString("poster_path");
                     movieResults.add(posterUrl);
-                    Log.v(LOG_TAG, posterUrl);
+                   // Log.v(LOG_TAG, posterUrl);
                 }
                 for (String items : movieResults){
-                    Log.v(LOG_TAG,items);
+                    //Log.v(LOG_TAG,items);
                 }
 
 
@@ -144,7 +146,7 @@ public class PopMovieFragment extends Fragment {
                         .appendQueryParameter(APPID_PARAM, BuildConfig.OPEN_MOVIEDB_API_KEY)
                         .build();
 
-                Log.v("TAG","BuiltURI" + builtUri.toString());
+                //Log.v("TAG","BuiltURI" + builtUri.toString());
 
                 URL url = new URL(builtUri.toString());
 
@@ -173,7 +175,7 @@ public class PopMovieFragment extends Fragment {
 
                 movieJsonStr = buffer.toString();
 
-                Log.v(LOG_TAG, "Movie Json String" + movieJsonStr);
+                //Log.v(LOG_TAG, "Movie Json String" + movieJsonStr);
 
 
             } catch (IOException e) {
@@ -200,7 +202,7 @@ public class PopMovieFragment extends Fragment {
                  String [] check_items = getMovieImageFromJson(movieJsonStr);
 
                 for (String items : check_items){
-                    Log.v(LOG_TAG,items+"new");
+                  //  Log.v(LOG_TAG,items+"new");
                 }
                 return  check_items;
 
@@ -228,13 +230,13 @@ public class PopMovieFragment extends Fragment {
                               .build();
 
                       imageAdapter.setmresultItems(new URL(builtUri.toString()));
-                      Log.v(LOG_TAG, resultItems + "GoodLuck" + builtUri.toString());
+                //      Log.v(LOG_TAG, resultItems + "GoodLuck" + builtUri.toString());
 
                   }catch (MalformedURLException ex){
                       //Log.e(LOG_TAG, "onPostExecute: " );
                   }
                 }
-
+              //  Log.d(LOG_TAG,"the count"+imageAdapter.getCount());
                 imageAdapter.notifyDataSetChanged();
             }
         }
@@ -283,19 +285,20 @@ class ImageAdapter extends BaseAdapter {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            ImageView imageView;
+            final ImageView imageView;
 
             if (convertView == null){
 //            if it is not recycled, initialize some attributes
                 imageView = new ImageView(mContext);
-                imageView.setLayoutParams(new GridView.LayoutParams(85,85));
+                imageView.setLayoutParams(new GridView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                 imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                imageView.setPadding(8,8,8,8);
+                imageView.setPadding(0,0,0,0);
 
             }else{
+
                 imageView = (ImageView) convertView;
             }
-            //imageView.setImageResource(mThumbsIds[position]);
+
             //Log.v("AgainCheck", mresultItems.toString() + "again");
             URL picUrl =getItem(position);
 
@@ -304,11 +307,26 @@ class ImageAdapter extends BaseAdapter {
                         .error(R.drawable.user_placeholder_error)
 
 
-                        .into(imageView);
+
+                        .into(imageView, new Callback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        imageView.setVisibility(View.VISIBLE);
+
+                                    }
+
+                                    @Override
+                                    public void onError() {
+                                        imageView.setVisibility(View.INVISIBLE);
+                                    }
+                                }
+                        );
+//            Log.v("check", "check",new Exception());
 
 
 
 
+            //imageView.setImageResource(R.drawable.user_placeholder);
             return  imageView;
         }
 
