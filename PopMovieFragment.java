@@ -1,6 +1,7 @@
 package com.example.android.popmovies;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -54,6 +55,10 @@ public class PopMovieFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.v("check","ok");
+
+                Intent intent = new Intent(getContext(), DetailActivity.class);
+                intent.putExtra("Check",getId());
+                startActivity(intent);
             }
         });
 
