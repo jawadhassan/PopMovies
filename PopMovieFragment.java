@@ -2,9 +2,11 @@ package com.example.android.popmovies;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -54,10 +56,10 @@ public class PopMovieFragment extends Fragment {
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.v("check","ok");
+                Log.v("check", "ok");
 
                 Intent intent = new Intent(getContext(), DetailActivity.class);
-                intent.putExtra("Check",getId());
+                intent.putExtra("Check", getId());
                 startActivity(intent);
             }
         });
@@ -69,6 +71,7 @@ public class PopMovieFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
 
 
     }
@@ -79,15 +82,19 @@ public class PopMovieFragment extends Fragment {
         updateMovies();
     }
 
+
     public void updateMovies() {
         FetchMovieTask movieTask = new FetchMovieTask();
-        movieTask.execute();
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String criteria = sharedPreferences.getString(getString(R.string.pref_categories), getString(R.string.pref_categories_default));
+        movieTask.execute(criteria);
     }
 
     public class FetchMovieTask extends AsyncTask<String, Void, String[]> {
 
 
         final String LOG_TAG = FetchMovieTask.class.getSimpleName();
+
 
         private String[] getMovieImageFromJson(String movieJsonStr)
                 throws JSONException {
@@ -137,17 +144,18 @@ public class PopMovieFragment extends Fragment {
             String movieJsonStr = null;
             //parameters for api link will be here
 
+
             try {
 
                 final String MOVIE_BASE_URL = "https://api.themoviedb.org/3/movie";
                 final String APPID_PARAM = "api_key";
-                final String CRITERIA_FOR_MOVIE_SELECTION_TOP = "top_rated";
-                final String CRITERIA_FOR_MOVIE_SELECTION_POPULAR = "popular";
+                //final String CRITERIA_FOR_MOVIE_SELECTION_TOP = "top_rated";
+                //final String CRITERIA_FOR_MOVIE_SELECTION_POPULAR = "popular";
 
 
 //            URL url = new URL("https://api.themoviedb.org/3/movie/top_rated?api_key=73ffdcc612f97ab172f6411ce48c3a15");
                 Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
-                        .appendPath(CRITERIA_FOR_MOVIE_SELECTION_TOP)
+                        .appendPath(params[0])
                         .appendQueryParameter(APPID_PARAM, BuildConfig.OPEN_MOVIEDB_API_KEY)
                         .build();
 
@@ -223,7 +231,7 @@ public class PopMovieFragment extends Fragment {
         protected void onPostExecute(String[] result) {
 
             if (result != null) {
-
+                imageAdapter.clear();
 
                 for (String resultItems : result){
                   try {
@@ -280,6 +288,10 @@ class ImageAdapter extends BaseAdapter {
         public long getItemId(int position){
             return  0;
         }
+
+    void clear() {
+        mresultItems.clear();
+    }
 
 
     public void setmresultItems(URL resultItems ){
