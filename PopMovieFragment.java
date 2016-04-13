@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -68,9 +70,9 @@ public class PopMovieFragment extends Fragment {
                 MovieObjectDetail movieObjectDetail = new MovieObjectDetail();
                 try {
                     movieObjectDetailList = movieObjectDetail.getMovieDetailsFromJson(movieArray, urlcompared);
-                    Log.v("check", "ok good");
+                    MyParcelable myParcelable = new MyParcelable(movieObjectDetailList.get("title").toString(), movieObjectDetailList.get("release_date").toString(), movieObjectDetailList.get("overview").toString(), movieObjectDetailList.get("vote_average").toString());
                     Intent intent = new Intent(getContext(), DetailActivity.class);
-                    intent.putExtra(Intent.EXTRA_TEXT, movieObjectDetailList.toString());
+                    intent.putExtra("com.example.android.popmovies", myParcelable);
                     startActivity(intent);
 
 
@@ -367,10 +369,10 @@ class MovieObjectDetail {
         //posterUrl = "\\"+posterUrl;
         for (int i = 0; i < movieArray.length(); i++) {
             JSONObject movieObjectDetail = movieArray.getJSONObject(i);
-            Log.v("check", movieObjectDetail.getString("poster_path"));
+            //Log.v("check", movieObjectDetail.getString("poster_path"));
 
             if ((movieObjectDetail.getString("poster_path")).equals(posterUrl)) {
-                Log.v("check", movieObjectDetailList.toString());
+                //Log.v("check", movieObjectDetailList.toString());
                 movieObjectDetailList.put("title", movieObjectDetail.getString("title"));
                 movieObjectDetailList.put("release_date", movieObjectDetail.getString("release_date"));
                 movieObjectDetailList.put("overview", movieObjectDetail.getString("overview"));
@@ -382,5 +384,53 @@ class MovieObjectDetail {
         }
         return movieObjectDetailList;
     }
+
+
+}
+
+class MyParcelable implements Parcelable {
+
+    public static final Parcelable.Creator<MyParcelable> CREATOR
+            = new Parcelable.Creator<MyParcelable>() {
+        @Override
+        public MyParcelable createFromParcel(Parcel in) {
+            return new MyParcelable(in);
+        }
+
+        @Override
+        public MyParcelable[] newArray(int size) {
+            return new MyParcelable[size];
+        }
+    };
+    String title, release_date, overview, vote_average;
+
+    public MyParcelable(String title, String release_date, String overview, String vote_average) {
+        this.title = title;
+        this.release_date = release_date;
+        this.overview = overview;
+        this.vote_average = vote_average;
+    }
+
+    private MyParcelable(Parcel in) {
+        title = in.readString();
+        release_date = in.readString();
+        overview = in.readString();
+        vote_average = in.readString();
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(title);
+        dest.writeString(release_date);
+        dest.writeString(overview);
+        dest.writeString(vote_average);
+
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
 }
 

@@ -12,7 +12,7 @@ import android.widget.TextView;
  * A placeholder fragment containing a simple view.
  */
 public class DetailActivityFragment extends Fragment {
-    private String mMovieDetail;
+    private MyParcelable mMovieDetail;
 
     public DetailActivityFragment() {
     }
@@ -24,14 +24,29 @@ public class DetailActivityFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
 
+//        Bundle bundle = getActivity().getIntent().getExtras();
+//        Object obj = bundle.getParcelable("com.example.android.popmovies");
+
         Intent intent = getActivity().getIntent();
-        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) {
+
+        if (intent != null && intent.hasExtra("com.example.android.popmovies")) {
+            mMovieDetail = intent.getExtras().getParcelable("com.example.android.popmovies");
+
         }
+        TextView title = (TextView) rootView.findViewById(R.id.title);
+        TextView releaseDate = (TextView) rootView.findViewById(R.id.releaseDate);
+        TextView voteAverage = (TextView) rootView.findViewById(R.id.voteAverage);
+        TextView overView = (TextView) rootView.findViewById(R.id.overView);
+        if (mMovieDetail != null) {
+            title.setText(mMovieDetail.title);
+            releaseDate.setText(mMovieDetail.release_date);
+            voteAverage.setText(mMovieDetail.vote_average);
+            overView.setText(mMovieDetail.overview);
+        }
+        //mMovieDetail = intent.getStringExtra(Intent.EXTRA_TEXT);
 
-        mMovieDetail = intent.getStringExtra(Intent.EXTRA_TEXT);
-
-        ((TextView) rootView.findViewById(R.id.detail_text))
-                .setText(mMovieDetail);
+        //  ((TextView) rootView.findViewById(R.id.detail_text))
+        //          .setText(mMovieDetail);
 
         return rootView;
     }
