@@ -6,7 +6,11 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.Picasso;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -37,11 +41,28 @@ public class DetailActivityFragment extends Fragment {
         TextView releaseDate = (TextView) rootView.findViewById(R.id.releaseDate);
         TextView voteAverage = (TextView) rootView.findViewById(R.id.voteAverage);
         TextView overView = (TextView) rootView.findViewById(R.id.overView);
+        final ImageView imageView = (ImageView) rootView.findViewById(R.id.imageView);
+
+        Picasso.with(getContext()).load(mMovieDetail.urlcompared)
+                .error(R.drawable.user_placeholder_error)
+                .into(imageView, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        imageView.setVisibility(View.VISIBLE);
+                    }
+
+                    @Override
+                    public void onError() {
+                        imageView.setVisibility(View.INVISIBLE);
+
+                    }
+                });
         if (mMovieDetail != null) {
             title.setText(mMovieDetail.title);
             releaseDate.setText(mMovieDetail.release_date);
             voteAverage.setText(mMovieDetail.vote_average);
             overView.setText(mMovieDetail.overview);
+
         }
         //mMovieDetail = intent.getStringExtra(Intent.EXTRA_TEXT);
 
