@@ -70,7 +70,7 @@ public class PopMovieFragment extends Fragment {
                 MovieObjectDetail movieObjectDetail = new MovieObjectDetail();
                 try {
                     movieObjectDetailList = movieObjectDetail.getMovieDetailsFromJson(movieArray, urlcompared);
-                    MyParcelable myParcelable = new MyParcelable(movieObjectDetailList.get("title").toString(), movieObjectDetailList.get("release_date").toString(), movieObjectDetailList.get("overview").toString(), movieObjectDetailList.get("vote_average").toString(), movieObjectDetailList.get("poster_url").toString());
+                    MyParcelable myParcelable = new MyParcelable(movieObjectDetailList.get("title").toString(), movieObjectDetailList.get("release_date").toString(), movieObjectDetailList.get("overview").toString(), movieObjectDetailList.get("vote_average").toString(), movieObjectDetailList.get("poster_url").toString(), movieObjectDetailList.get("id").toString());
                     Intent intent = new Intent(getContext(), DetailActivity.class);
                     intent.putExtra("com.example.android.popmovies", myParcelable);
                     startActivity(intent);
@@ -385,6 +385,7 @@ class MovieObjectDetail {
                 movieObjectDetailList.put("overview", movieObjectDetail.getString("overview"));
                 movieObjectDetailList.put("vote_average", movieObjectDetail.getString("vote_average"));
                 movieObjectDetailList.put("poster_url", urlcompared.toString());
+                movieObjectDetailList.put("id", movieObjectDetail.getString("id"));
 
                 //movieObjectDetailList.add(movieObjectDetail.getString("title"));
 
@@ -410,14 +411,15 @@ class MyParcelable implements Parcelable {
             return new MyParcelable[size];
         }
     };
-    String title, release_date, overview, vote_average, urlcompared;
+    String title, release_date, overview, vote_average, urlcompared, id;
 
-    public MyParcelable(String title, String release_date, String overview, String vote_average, String urlcompared) {
+    public MyParcelable(String title, String release_date, String overview, String vote_average, String urlcompared, String id) {
         this.title = title;
         this.release_date = release_date;
         this.overview = overview;
         this.vote_average = vote_average;
         this.urlcompared = urlcompared;
+        this.id = id;
     }
 
     private MyParcelable(Parcel in) {
@@ -426,6 +428,7 @@ class MyParcelable implements Parcelable {
         overview = in.readString();
         vote_average = in.readString();
         urlcompared = in.readString();
+        id = in.readString();
     }
 
     @Override
@@ -435,6 +438,7 @@ class MyParcelable implements Parcelable {
         dest.writeString(overview);
         dest.writeString(vote_average);
         dest.writeString(urlcompared);
+        dest.writeString(id);
 
     }
 

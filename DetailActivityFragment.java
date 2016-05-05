@@ -69,6 +69,7 @@ public class DetailActivityFragment extends Fragment {
         //  ((TextView) rootView.findViewById(R.id.detail_text))
         //          .setText(mMovieDetail);
 
+
         return rootView;
     }
 
