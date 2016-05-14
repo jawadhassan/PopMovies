@@ -17,7 +17,14 @@ import android.widget.TextView;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -47,12 +54,12 @@ public class DetailActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         movieEntries = new ArrayList<>();
-        movieEntries.add("check");
-        movieEntries.add("check");
-        movieEntries.add("check");
-        movieEntries.add("check");
-        movieEntries.add("check");
-        movieEntries.add("check");
+//        movieEntries.add("check");
+//        movieEntries.add("check");
+//        movieEntries.add("check");
+//        movieEntries.add("check");
+//        movieEntries.add("check");
+//        movieEntries.add("check");
 
         rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
@@ -102,11 +109,11 @@ public class DetailActivityFragment extends Fragment {
         Log.v("check", mMovieDetail.id.toString());
 
 
-        mListView = (ListView) rootView.findViewById(R.id.movie_list_view);
+        // mListView = (ListView) rootView.findViewById(R.id.movie_list_view);
 
 //        getLoaderManager().initLoader(0, null, this);
         arrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.fragement_movie_trailer_item_view, R.id.movie_trailer_text_view, movieEntries);
-        mListView.setAdapter(arrayAdapter);
+        //   mListView.setAdapter(arrayAdapter);
 
 
         return rootView;
@@ -119,9 +126,11 @@ public class DetailActivityFragment extends Fragment {
         fetchMovieTrailerTask.execute(movieId, videos);
     }
 
+
     class FetchMovieTrailerTask extends AsyncTask<String, Void, String[]> {
 
         final String LOG_TAG = FetchMovieTrailerTask.class.getSimpleName();
+
 
         @Override
         protected String[] doInBackground(String... params) {
@@ -143,18 +152,93 @@ public class DetailActivityFragment extends Fragment {
                 URL TrailerURL = new URL(builtTrailerURI.toString());
                 Log.v(LOG_TAG, "ok" + TrailerURL.toString());
 
+                httpURLConnection = (HttpURLConnection) TrailerURL.openConnection();
+                httpURLConnection.setRequestMethod("GET");
+                httpURLConnection.connect();
+
+                InputStream inputStream = httpURLConnection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    movieJsonTrailer = null;
+                }
+
+                bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    buffer.append(line + "\n");
+
+                }
+                if (buffer.length() == 0) {
+                    movieJsonTrailer = null;
+                }
+                movieJsonTrailer = buffer.toString();
+                Log.v(LOG_TAG, "check" + movieJsonTrailer);
+
 
             } catch (Exception ex) {
-
+                ex.printStackTrace();
+                movieJsonTrailer = null;
+            } finally {
+                if (httpURLConnection != null) {
+                    httpURLConnection.disconnect();
+                }
+                if (bufferedReader != null) {
+                    try {
+                        bufferedReader.close();
+                    } catch (IOException ex) {
+                        Log.e(LOG_TAG, "check" + ex);
+                    }
+                }
             }
 
-            return new String[0];
+            try {
+                return getMovieTrailerDataFromJson(movieJsonTrailer);
+            } catch (JSONException e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+                e.printStackTrace();
+            }
+
+
+            return null;
+        }
+
+        private String[] getMovieTrailerDataFromJson(String movieJsonTrailer) throws JSONException {
+
+
+            final String KEY = "key";
+            final String Results = "results";
+            String trailerlink;
+            ArrayList<String> youTubeLinks = new ArrayList<>();
+
+            JSONObject jsonObject = new JSONObject(movieJsonTrailer);
+            JSONArray jsonArray = jsonObject.getJSONArray(Results);
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject idJsonObject = jsonArray.getJSONObject(i);
+                trailerlink = idJsonObject.getString(KEY);
+                youTubeLinks.add(trailerlink);
+            }
+            Log.v(LOG_TAG, "checklinks" + youTubeLinks.toString());
+            return youTubeLinks.toArray(new String[0]);
+
+
         }
 
         @Override
         protected void onPostExecute(String[] strings) {
-            super.onPostExecute(strings);
+
+            if (strings != null) {
+            }
+            arrayAdapter.clear();
+            for (String items : strings) {
+                arrayAdapter.add(items);
+            }
+            arrayAdapter.notifyDataSetChanged();
+
         }
+
+
     }
 
 
