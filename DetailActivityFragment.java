@@ -5,13 +5,13 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Callback;
@@ -28,22 +28,24 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class DetailActivityFragment extends Fragment {
     final String videos = "videos";
-    ArrayAdapter<String> arrayAdapter;
-    ListView mListView;
-    List<String> movieEntries;
+
+
     String movieId;
     View rootView;
+    ArrayList<String> myDataSet = new ArrayList<>();
+
     private MyParcelable mMovieDetail;
+    private RecyclerView mRecyclerView;
+    private RecyclerView.Adapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
 
 
-    //private  static final int LOADER_ID = 1;
 
     public DetailActivityFragment() {
     }
@@ -53,19 +55,10 @@ public class DetailActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        movieEntries = new ArrayList<>();
-//        movieEntries.add("check");
-//        movieEntries.add("check");
-//        movieEntries.add("check");
-//        movieEntries.add("check");
-//        movieEntries.add("check");
-//        movieEntries.add("check");
 
         rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
 
-//        Bundle bundle = getActivity().getIntent().getExtras();
-//        Object obj = bundle.getParcelable("com.example.android.popmovies");
 
         Intent intent = getActivity().getIntent();
 
@@ -106,14 +99,16 @@ public class DetailActivityFragment extends Fragment {
         //  ((TextView) rootView.findViewById(R.id.detail_text))
         //          .setText(mMovieDetail);
 
-        Log.v("check", mMovieDetail.id.toString());
+
+        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.movie_trailer_recycler_view);
+        mLayoutManager = new LinearLayoutManager(getActivity());
 
 
-        // mListView = (ListView) rootView.findViewById(R.id.movie_list_view);
+        mAdapter = new MyAdapter(myDataSet);
 
-//        getLoaderManager().initLoader(0, null, this);
-        arrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.fragement_movie_trailer_item_view, R.id.movie_trailer_text_view, movieEntries);
-        //   mListView.setAdapter(arrayAdapter);
+
+        mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerView.setAdapter(mAdapter);
 
 
         return rootView;
@@ -150,7 +145,7 @@ public class DetailActivityFragment extends Fragment {
                         .build();
                 // May through malformed url exception
                 URL TrailerURL = new URL(builtTrailerURI.toString());
-                Log.v(LOG_TAG, "ok" + TrailerURL.toString());
+
 
                 httpURLConnection = (HttpURLConnection) TrailerURL.openConnection();
                 httpURLConnection.setRequestMethod("GET");
@@ -173,7 +168,7 @@ public class DetailActivityFragment extends Fragment {
                     movieJsonTrailer = null;
                 }
                 movieJsonTrailer = buffer.toString();
-                Log.v(LOG_TAG, "check" + movieJsonTrailer);
+
 
 
             } catch (Exception ex) {
@@ -208,7 +203,7 @@ public class DetailActivityFragment extends Fragment {
 
             final String KEY = "key";
             final String Results = "results";
-            String trailerlink;
+            String trailerLink;
             ArrayList<String> youTubeLinks = new ArrayList<>();
 
             JSONObject jsonObject = new JSONObject(movieJsonTrailer);
@@ -216,10 +211,10 @@ public class DetailActivityFragment extends Fragment {
 
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject idJsonObject = jsonArray.getJSONObject(i);
-                trailerlink = idJsonObject.getString(KEY);
-                youTubeLinks.add(trailerlink);
+                trailerLink = idJsonObject.getString(KEY);
+                youTubeLinks.add(trailerLink);
             }
-            Log.v(LOG_TAG, "checklinks" + youTubeLinks.toString());
+
             return youTubeLinks.toArray(new String[0]);
 
 
@@ -229,12 +224,19 @@ public class DetailActivityFragment extends Fragment {
         protected void onPostExecute(String[] strings) {
 
             if (strings != null) {
+
+
+                for (String items : strings) {
+                    Log.v(LOG_TAG, items);
+                    myDataSet.add(items);
+                    Log.v(LOG_TAG, myDataSet.toString());
+
+
             }
-            arrayAdapter.clear();
-            for (String items : strings) {
-                arrayAdapter.add(items);
-            }
-            arrayAdapter.notifyDataSetChanged();
+
+                mAdapter.notifyDataSetChanged();
+
+        }
 
         }
 
@@ -243,6 +245,57 @@ public class DetailActivityFragment extends Fragment {
 
 
 }
+
+
+class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
+    public ArrayList<String> mDataSet = new ArrayList<>();
+
+    public MyAdapter(ArrayList<String> myDataSet) {
+
+
+        for (String items : myDataSet) {
+            //Log.v("checkitems",mDataSet.toString());
+            //mDataSet.add(items);
+            mDataSet.add("check");
+            mDataSet.add("check");
+            mDataSet.add("check");
+
+        }
+
+    }
+
+    @Override
+    public MyAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
+                                                   int viewType) {
+        View v = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.fragement_movie_trailer_item_view, parent, false);
+        ViewHolder vh = new ViewHolder((TextView) v);
+        return vh;
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, int position) {
+        holder.mTextView.setText(mDataSet.get(position));
+    }
+
+    @Override
+    public int getItemCount() {
+        return mDataSet.size();
+        //return 0;
+    }
+
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        public TextView mTextView;
+
+        public ViewHolder(TextView v) {
+            super(v);
+            mTextView = v;
+        }
+    }
+
+}
+
+
 
 
 
