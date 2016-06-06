@@ -84,7 +84,7 @@ public class PopMovieFragment extends Fragment {
             }
         });
 
-        // return inflater.inflate(R.layout.fragment_main, container, false);
+
         return view;
     }
 
@@ -232,9 +232,7 @@ public class PopMovieFragment extends Fragment {
                 // here will be method call for JSon parsing.
                 String[] check_items = getMovieImageFromJson(movieJsonStr);
 
-//                for (String items : check_items){
-//                  //  Log.v(LOG_TAG,items+"new");
-//                }
+
                 return check_items;
 
             } catch (JSONException e) {
@@ -379,7 +377,7 @@ class MovieObjectDetail {
             //Log.v("check", movieObjectDetail.getString("poster_path"));
 
             if ((movieObjectDetail.getString("poster_path")).equals(posterUrl)) {
-                //Log.v("check", movieObjectDetailList.toString());
+
                 movieObjectDetailList.put("title", movieObjectDetail.getString("title"));
                 movieObjectDetailList.put("release_date", movieObjectDetail.getString("release_date"));
                 movieObjectDetailList.put("overview", movieObjectDetail.getString("overview"));
