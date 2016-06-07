@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -47,6 +48,8 @@ public class DetailActivityFragment extends Fragment {
     View rootView;
     ListView mUserReviews;
     ArrayAdapter<String> movieAdapter;
+    ArrayList<String> trailerList = new ArrayList<>();
+    ArrayList<URL> YoutubeURLList = new ArrayList<>();
     private MyParcelable mMovieDetail;
 
 
@@ -114,6 +117,21 @@ public class DetailActivityFragment extends Fragment {
         mListView.setAdapter(arrayAdapter);
 
 
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                URL TrailerURL = YoutubeURLList.get(position);
+                // String TrailerURLString = TrailerURL.toString();
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(TrailerURL.toString()));
+                startActivity(intent);
+
+            }
+        });
+
+
+
+
+
         return rootView;
     }
 
@@ -122,8 +140,10 @@ public class DetailActivityFragment extends Fragment {
         super.onStart();
         FetchMovieTrailerTask fetchMovieTrailerTask = new FetchMovieTrailerTask();
         fetchMovieTrailerTask.execute(movieId, VIDEOS);
+
         FetchMovieReviewTask fetchMovieReviewTask = new FetchMovieReviewTask();
         fetchMovieReviewTask.execute(movieId, REVIEWS);
+
     }
 
 
@@ -225,6 +245,23 @@ public class DetailActivityFragment extends Fragment {
 
         }
 
+//        private void trailerUrlFormer(){
+//            for(String trailerListItems : trailerList)
+//            try{
+//                final String YOUTUBE_TRAILER_LINK_URL = "https://www.youtube.com/watch";
+//                final String YOUTUBE_APPID = "v";
+//                Uri builtYouTubeTrailerURI = Uri.parse(YOUTUBE_TRAILER_LINK_URL).buildUpon()
+//                        .appendQueryParameter(YOUTUBE_APPID, trailerListItems)
+//                        .build();
+//                URL builtYoutubeTrailerURL = new URL(builtYouTubeTrailerURI.toString());
+//                YoutubeURLList.add(builtYoutubeTrailerURL);
+//
+//
+//            }catch (Exception ex){
+//                ex.printStackTrace();
+//            }
+//        }
+
         @Override
         protected void onPostExecute(String[] strings) {
 
@@ -233,6 +270,20 @@ public class DetailActivityFragment extends Fragment {
             arrayAdapter.clear();
             for (String items : strings) {
 
+                try {
+                    final String YOUTUBE_TRAILER_LINK_URL = "https://www.youtube.com/watch";
+                    final String YOUTUBE_APPID = "v";
+                    Uri builtYouTubeTrailerURI = Uri.parse(YOUTUBE_TRAILER_LINK_URL).buildUpon()
+                            .appendQueryParameter(YOUTUBE_APPID, items)
+                            .build();
+                    URL builtYoutubeTrailerURL = new URL(builtYouTubeTrailerURI.toString());
+                    YoutubeURLList.add(builtYoutubeTrailerURL);
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+
+                //trailerList.add(items);
                 arrayAdapter.add("Trailers");
             }
                 arrayAdapter.notifyDataSetChanged();
