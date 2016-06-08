@@ -339,6 +339,8 @@ class ImageAdapter extends BaseAdapter {
         //Log.v("AgainCheck", mresultItems.toString() + "again");
         URL picUrl = getItem(position);
         Picasso.with(mContext).load(picUrl.toString())
+                .resize(185, 278)
+                .centerCrop()
                 //.placeholder(R.drawable.user_placeholder)
                 .error(R.drawable.user_placeholder_error)
                 .into(imageView, new Callback() {

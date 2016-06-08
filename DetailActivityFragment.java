@@ -245,22 +245,6 @@ public class DetailActivityFragment extends Fragment {
 
         }
 
-//        private void trailerUrlFormer(){
-//            for(String trailerListItems : trailerList)
-//            try{
-//                final String YOUTUBE_TRAILER_LINK_URL = "https://www.youtube.com/watch";
-//                final String YOUTUBE_APPID = "v";
-//                Uri builtYouTubeTrailerURI = Uri.parse(YOUTUBE_TRAILER_LINK_URL).buildUpon()
-//                        .appendQueryParameter(YOUTUBE_APPID, trailerListItems)
-//                        .build();
-//                URL builtYoutubeTrailerURL = new URL(builtYouTubeTrailerURI.toString());
-//                YoutubeURLList.add(builtYoutubeTrailerURL);
-//
-//
-//            }catch (Exception ex){
-//                ex.printStackTrace();
-//            }
-//        }
 
         @Override
         protected void onPostExecute(String[] strings) {
