@@ -3,9 +3,12 @@ package com.example.android.popmovies;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
@@ -27,13 +30,17 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -77,7 +84,7 @@ public class PopMovieFragment extends Fragment {
 
 
                 } catch (Exception e) {
-                    Log.v("check", e.toString());
+                    //Log.v("check", e.toString());
                 }
 
 
@@ -336,8 +343,48 @@ class ImageAdapter extends BaseAdapter {
             imageView = (ImageView) convertView;
         }
 
-        //Log.v("AgainCheck", mresultItems.toString() + "again");
-        URL picUrl = getItem(position);
+
+        final URL picUrl = getItem(position);
+
+
+        com.squareup.picasso.Target target = new com.squareup.picasso.Target() {
+            @Override
+            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+
+
+                File pictureFile = getOutputMediaFile();
+                if (pictureFile == null) {
+                    Log.v("check", "permission check kar !!!! ");
+                    return;
+                }
+                try {
+                    FileOutputStream fileOutputStream = new FileOutputStream(pictureFile);
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream);
+                    fileOutputStream.close();
+
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+
+            }
+
+
+            @Override
+            public void onBitmapFailed(Drawable errorDrawable) {
+
+            }
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+            }
+        };
+
+
+        Picasso.with(mContext).load(picUrl.toString()).into(target);
+
+
+
         Picasso.with(mContext).load(picUrl.toString())
                 .resize(185, 278)
                 .centerCrop()
@@ -359,6 +406,29 @@ class ImageAdapter extends BaseAdapter {
 //            Log.v("check", "check",new Exception());
         //imageView.setImageResource(R.drawable.user_placeholder);
         return imageView;
+    }
+
+    File getOutputMediaFile() {
+
+
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
+                + "/Android/data/"
+                + mContext.getApplicationContext().getPackageName()
+                + "/Files"
+
+        );
+
+        if (!mediaStorageDir.exists()) {
+            if (!mediaStorageDir.mkdirs()) {
+                return null;
+            }
+        }
+
+        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
+        File mediaFile;
+        String mImageName = "MI_" + timeStamp + ".jpg";
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
+        return mediaFile;
     }
 
     //references to our Images
