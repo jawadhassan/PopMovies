@@ -37,9 +37,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -157,6 +155,31 @@ public class PopMovieFragment extends Fragment {
         }
 
 
+        File getOutputMediaFile() {
+
+            int counter = 0;
+            File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
+                    + "/Android/data/"
+                    + getContext().getApplicationContext().getPackageName()
+                    + "/Files"
+
+            );
+
+            if (!mediaStorageDir.exists()) {
+                if (!mediaStorageDir.mkdirs()) {
+                    return null;
+                }
+            }
+
+            // String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
+            File mediaFile;
+            String mImageName = "MI_" + counter + ".jpg";
+            counter++;
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
+            return mediaFile;
+        }
+
+
         @Override
         protected String[] doInBackground(String... params) {
 
@@ -237,6 +260,64 @@ public class PopMovieFragment extends Fragment {
             try {
                 // here will be method call for JSon parsing.
                 String[] check_items = getMovieImageFromJson(movieJsonStr);
+                ArrayList<URL> checkArrayList = new ArrayList<>();
+                for (String resultcheckItems : check_items) {
+                    try {
+                        //Log.v(LOG_TAG, resultItems + "GoodLuck");
+                        final String PICTURE_BASE_URL = "http://image.tmdb.org/t/p/w185/";
+                        final String PICTURE_URL_END = resultcheckItems;
+                        Uri builtUri = Uri.parse(PICTURE_BASE_URL).buildUpon()
+                                .appendPath(PICTURE_URL_END.replace("/", ""))
+                                .build();
+
+                        checkArrayList.add(new URL(builtUri.toString()));
+
+
+                        //      Log.v(LOG_TAG, resultItems + "GoodLuck" + builtUri.toString());
+
+                    } catch (MalformedURLException ex) {
+                        //Log.e(LOG_TAG, "onPostExecute: " );
+                    }
+
+                }
+
+                for (int i = 0; i < checkArrayList.size(); i++) {
+
+                    try {
+
+                        Bitmap bitmap = Picasso.with(getContext()).load(checkArrayList.get(i).toString()).get();
+                        File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
+                                + "/Android/data/"
+                                + getContext().getApplicationContext().getPackageName()
+                                + "/Files"
+
+                        );
+
+                        if (!mediaStorageDir.exists()) {
+                            if (!mediaStorageDir.mkdirs()) {
+                                return null;
+                            }
+                        }
+
+                        // String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
+                        File mediaFile;
+                        String mImageName = "MI_" + i + ".jpg";
+
+                        mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
+
+                        File pictureFile = mediaFile;
+                        if (pictureFile == null) {
+                            Log.v("check", "permission check kar !!!! ");
+                        }
+                        FileOutputStream fileOutputStream = new FileOutputStream(pictureFile);
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream);
+
+                        fileOutputStream.close();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+
+                }
 
 
                 return check_items;
@@ -391,23 +472,7 @@ class ImageAdapter extends BaseAdapter {
 //        };
 
 
-        for (int i = 0; i < mresultItems.size(); i++) {
 
-            try {
-
-                Bitmap bitmap = Picasso.with(mContext).load(mresultItems.get(i).toString()).get();
-                File pictureFile = getOutputMediaFile();
-                if (pictureFile == null) {
-                    Log.v("check", "permission check kar !!!! ");
-                }
-                FileOutputStream fileOutputStream = new FileOutputStream(pictureFile);
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream);
-                fileOutputStream.close();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-
-        }
 
 
 
@@ -434,28 +499,6 @@ class ImageAdapter extends BaseAdapter {
         return imageView;
     }
 
-    File getOutputMediaFile() {
-
-
-        File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
-                + "/Android/data/"
-                + mContext.getApplicationContext().getPackageName()
-                + "/Files"
-
-        );
-
-        if (!mediaStorageDir.exists()) {
-            if (!mediaStorageDir.mkdirs()) {
-                return null;
-            }
-        }
-
-        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
-        File mediaFile;
-        String mImageName = "MI_" + timeStamp + ".jpg";
-        mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
-        return mediaFile;
-    }
 
     //references to our Images
 
