@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -344,44 +343,71 @@ class ImageAdapter extends BaseAdapter {
         }
 
 
-        final URL picUrl = getItem(position);
+        URL picUrl = getItem(position);
 
 
-        com.squareup.picasso.Target target = new com.squareup.picasso.Target() {
-            @Override
-            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+//        com.squareup.picasso.Target target = new com.squareup.picasso.Target() {
+//            @Override
+//
+//
+//            public void onBitmapLoaded(final Bitmap bitmap, Picasso.LoadedFrom from) {
+//
+//                new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//
+//                        File pictureFile = getOutputMediaFile();
+//                        if (pictureFile == null) {
+//                            Log.v("check", "permission check kar !!!! ");
+//                            return;
+//                        }
+//                        try {
+//                            FileOutputStream fileOutputStream = new FileOutputStream(pictureFile);
+//                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream);
+//                            fileOutputStream.close();
+//
+//                        } catch (IOException ex) {
+//                            ex.printStackTrace();
+//                        }
+//
+//                    }
+//                }).start();
+//
+//
+//
+//
+//            }
+//
+//
+//            @Override
+//            public void onBitmapFailed(Drawable errorDrawable) {
+//
+//            }
+//
+//            @Override
+//            public void onPrepareLoad(Drawable placeHolderDrawable) {
+//
+//            }
+//        };
 
 
+        for (int i = 0; i < mresultItems.size(); i++) {
+
+            try {
+
+                Bitmap bitmap = Picasso.with(mContext).load(mresultItems.get(i).toString()).get();
                 File pictureFile = getOutputMediaFile();
                 if (pictureFile == null) {
                     Log.v("check", "permission check kar !!!! ");
-                    return;
                 }
-                try {
-                    FileOutputStream fileOutputStream = new FileOutputStream(pictureFile);
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream);
-                    fileOutputStream.close();
-
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-
+                FileOutputStream fileOutputStream = new FileOutputStream(pictureFile);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream);
+                fileOutputStream.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
             }
 
-
-            @Override
-            public void onBitmapFailed(Drawable errorDrawable) {
-
-            }
-
-            @Override
-            public void onPrepareLoad(Drawable placeHolderDrawable) {
-
-            }
-        };
-
-
-        Picasso.with(mContext).load(picUrl.toString()).into(target);
+        }
 
 
 
