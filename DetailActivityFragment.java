@@ -1,9 +1,15 @@
 package com.example.android.popmovies;
 
+import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -23,6 +30,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -50,6 +59,7 @@ public class DetailActivityFragment extends Fragment {
     ArrayAdapter<String> movieAdapter;
     ArrayList<String> trailerList = new ArrayList<>();
     ArrayList<URL> YoutubeURLList = new ArrayList<>();
+    String picturePath;
     private MyParcelable mMovieDetail;
 
 
@@ -59,7 +69,7 @@ public class DetailActivityFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+                             final Bundle savedInstanceState) {
 
         movieEntries = new ArrayList<>();
         reviewEntries = new ArrayList<>();
@@ -129,7 +139,38 @@ public class DetailActivityFragment extends Fragment {
         });
 
 
+        Button favbutton = (Button) rootView.findViewById(R.id.favButton);
+        favbutton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
 
+                        Log.d("check", "ok");
+
+                        SavePictoDatabaseTask savePictoDatabaseTask = new SavePictoDatabaseTask();
+                        savePictoDatabaseTask.execute();
+
+                        MySQLiteHelper db = new MySQLiteHelper(getContext());
+                        SQLiteDatabase sqLiteDatabase = db.getWritableDatabase();
+                        ContentValues contentValues = new ContentValues();
+                        contentValues.put("VOTES", mMovieDetail.vote_average);
+                        contentValues.put("OVERVIEW", mMovieDetail.overview);
+                        contentValues.put("RELEASEDATE", mMovieDetail.release_date);
+                        contentValues.put("TITLE", mMovieDetail.title);
+                        contentValues.put("ID", Integer.parseInt(mMovieDetail.id));
+
+
+                        sqLiteDatabase.insert("MOVIE",
+
+                                null,
+                                contentValues);
+
+                        db.close();
+
+
+                    }
+                }
+        );
 
 
         return rootView;
@@ -138,11 +179,42 @@ public class DetailActivityFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        FetchMovieTrailerTask fetchMovieTrailerTask = new FetchMovieTrailerTask();
-        fetchMovieTrailerTask.execute(movieId, VIDEOS);
 
-        FetchMovieReviewTask fetchMovieReviewTask = new FetchMovieReviewTask();
-        fetchMovieReviewTask.execute(movieId, REVIEWS);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String criteria = sharedPreferences.getString(getString(R.string.pref_categories), getString(R.string.pref_categories_default));
+        if (!criteria.equals("favourite")) {
+            FetchMovieTrailerTask fetchMovieTrailerTask = new FetchMovieTrailerTask();
+            fetchMovieTrailerTask.execute(movieId, VIDEOS);
+
+            FetchMovieReviewTask fetchMovieReviewTask = new FetchMovieReviewTask();
+            fetchMovieReviewTask.execute(movieId, REVIEWS);
+
+        }
+
+        arrayAdapter.clear();
+        arrayAdapter.add("Not available due to connectivity");
+
+        arrayAdapter.notifyDataSetChanged();
+        movieAdapter.clear();
+        movieAdapter.add("Not available due to connectivity");
+        movieAdapter.notifyDataSetChanged();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     }
 
@@ -390,6 +462,60 @@ public class DetailActivityFragment extends Fragment {
                 movieAdapter.notifyDataSetChanged();
 
             }
+        }
+    }
+
+    class SavePictoDatabaseTask extends AsyncTask {
+        @Override
+        protected Object doInBackground(Object[] params) {
+
+            try {
+
+                Bitmap bitmap = Picasso.with(getContext()).load(mMovieDetail.urlcompared).get();
+                File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
+                        + "/Android/data/"
+                        + getContext().getApplicationContext().getPackageName()
+                        + "/Files"
+
+                );
+
+                if (!mediaStorageDir.exists()) {
+                    if (!mediaStorageDir.mkdirs()) {
+                        return null;
+                    }
+                }
+
+                // String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
+                File mediaFile;
+                String mImageName = mMovieDetail.id + ".jpg";
+
+                mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
+
+
+                File pictureFile = mediaFile;
+                Log.v("check", pictureFile.toString());
+                ContentValues values = new ContentValues();
+                values.put("POSTERPATH", "file://" + pictureFile.toString());
+
+                MySQLiteHelper mySQLiteHelper = new MySQLiteHelper(getContext());
+                SQLiteDatabase sqLiteDatabase = mySQLiteHelper.getWritableDatabase();
+                sqLiteDatabase.update("MOVIE",
+                        values,
+                        "ID" + "=?", new String[]{String.valueOf(mMovieDetail.id)});
+
+
+                if (pictureFile == null) {
+                    Log.v("check", "permission check kar !!!! ");
+                }
+                FileOutputStream fileOutputStream = new FileOutputStream(pictureFile);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream);
+
+                fileOutputStream.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
+            return null;
         }
     }
 

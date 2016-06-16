@@ -3,11 +3,11 @@ package com.example.android.popmovies;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
@@ -29,8 +29,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -47,7 +45,8 @@ import java.util.Map;
 public class PopMovieFragment extends Fragment {
     ImageAdapter imageAdapter;
     JSONArray movieArray;
-
+    String criteria;
+    MyParcelable myParcelable;
 
     public PopMovieFragment() {
     }
@@ -60,7 +59,7 @@ public class PopMovieFragment extends Fragment {
 
         GridView gridView = (GridView) view.findViewById(R.id.gridview);
 
-        imageAdapter = new ImageAdapter(getActivity(), new ArrayList<URL>());
+        imageAdapter = new ImageAdapter(getActivity(), new ArrayList<String>());
 
         gridView.setAdapter(imageAdapter);
 
@@ -70,19 +69,38 @@ public class PopMovieFragment extends Fragment {
 
 
                 Map movieObjectDetailList;
-                URL urlcompared = imageAdapter.getItem(position);
+                String urlcompared = imageAdapter.getItem(position);
                 MovieObjectDetail movieObjectDetail = new MovieObjectDetail();
-                try {
-                    movieObjectDetailList = movieObjectDetail.getMovieDetailsFromJson(movieArray, urlcompared);
-                    MyParcelable myParcelable = new MyParcelable(movieObjectDetailList.get("title").toString(), movieObjectDetailList.get("release_date").toString(), movieObjectDetailList.get("overview").toString(), movieObjectDetailList.get("vote_average").toString(), movieObjectDetailList.get("poster_url").toString(), movieObjectDetailList.get("id").toString());
-                    Intent intent = new Intent(getContext(), DetailActivity.class);
-                    intent.putExtra("com.example.android.popmovies", myParcelable);
-                    startActivity(intent);
+                if (criteria.equals("favourite")) {
+                    String savedurlcompared = imageAdapter.getItem(position);
+                    MySQLiteHelper mySQLiteHelper = new MySQLiteHelper(getContext());
+                    SQLiteDatabase sqLiteDatabase = mySQLiteHelper.getWritableDatabase();
+                    Cursor cursor = sqLiteDatabase.query("MOVIE", null,
+                            "POSTERPATH=?", new String[]{String.valueOf(savedurlcompared)}, null, null, null);
+                    if (cursor != null) {
+                        cursor.moveToFirst();
+                        myParcelable = new MyParcelable(cursor.getString(cursor.getColumnIndex("TITLE")), cursor.getString(cursor.getColumnIndex("RELEASEDATE")), cursor.getString(cursor.getColumnIndex("OVERVIEW")), cursor.getString(cursor.getColumnIndex("VOTES")), cursor.getString(cursor.getColumnIndex("POSTERPATH")), cursor.getString(cursor.getColumnIndex("ID")));
+                        Intent intent = new Intent(getContext(), DetailActivity.class);
+                        intent.putExtra("com.example.android.popmovies", myParcelable);
+                        startActivity(intent);
+                    }
 
 
-                } catch (Exception e) {
-                    //Log.v("check", e.toString());
+                } else {
+
+                    try {
+                        movieObjectDetailList = movieObjectDetail.getMovieDetailsFromJson(movieArray, urlcompared);
+                        myParcelable = new MyParcelable(movieObjectDetailList.get("title").toString(), movieObjectDetailList.get("release_date").toString(), movieObjectDetailList.get("overview").toString(), movieObjectDetailList.get("vote_average").toString(), movieObjectDetailList.get("poster_url").toString(), movieObjectDetailList.get("id").toString());
+                        Intent intent = new Intent(getContext(), DetailActivity.class);
+                        intent.putExtra("com.example.android.popmovies", myParcelable);
+                        startActivity(intent);
+
+
+                    } catch (Exception e) {
+                        //Log.v("check", e.toString());
+                    }
                 }
+
 
 
             }
@@ -110,8 +128,13 @@ public class PopMovieFragment extends Fragment {
     public void updateMovies() {
         FetchMovieTask movieTask = new FetchMovieTask();
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String criteria = sharedPreferences.getString(getString(R.string.pref_categories), getString(R.string.pref_categories_default));
-        movieTask.execute(criteria);
+        criteria = sharedPreferences.getString(getString(R.string.pref_categories), getString(R.string.pref_categories_default));
+        if (criteria.equals("favourite")) {
+            FetchSavedFavourites fetchSavedFavourites = new FetchSavedFavourites();
+            fetchSavedFavourites.execute();
+        } else {
+            movieTask.execute(criteria);
+        }
     }
 
     public class FetchMovieTask extends AsyncTask<String, Void, String[]> {
@@ -136,7 +159,7 @@ public class PopMovieFragment extends Fragment {
                     JSONObject movieObject = movieArray.getJSONObject(i);
                     posterUrl = movieObject.getString("poster_path");
                     movieResults.add(posterUrl);
-                    // Log.v(LOG_TAG, posterUrl);
+                    Log.v(LOG_TAG, posterUrl);
                 }
 //                for (String items : movieResults){
 //                    //Log.v(LOG_TAG,items);
@@ -152,31 +175,6 @@ public class PopMovieFragment extends Fragment {
             // Log.v(LOG_TAG,posterUrl);
 
 
-        }
-
-
-        File getOutputMediaFile() {
-
-            int counter = 0;
-            File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
-                    + "/Android/data/"
-                    + getContext().getApplicationContext().getPackageName()
-                    + "/Files"
-
-            );
-
-            if (!mediaStorageDir.exists()) {
-                if (!mediaStorageDir.mkdirs()) {
-                    return null;
-                }
-            }
-
-            // String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
-            File mediaFile;
-            String mImageName = "MI_" + counter + ".jpg";
-            counter++;
-            mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
-            return mediaFile;
         }
 
 
@@ -281,44 +279,6 @@ public class PopMovieFragment extends Fragment {
 
                 }
 
-                for (int i = 0; i < checkArrayList.size(); i++) {
-
-                    try {
-
-                        Bitmap bitmap = Picasso.with(getContext()).load(checkArrayList.get(i).toString()).get();
-                        File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
-                                + "/Android/data/"
-                                + getContext().getApplicationContext().getPackageName()
-                                + "/Files"
-
-                        );
-
-                        if (!mediaStorageDir.exists()) {
-                            if (!mediaStorageDir.mkdirs()) {
-                                return null;
-                            }
-                        }
-
-                        // String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
-                        File mediaFile;
-                        String mImageName = "MI_" + i + ".jpg";
-
-                        mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
-
-                        File pictureFile = mediaFile;
-                        if (pictureFile == null) {
-                            Log.v("check", "permission check kar !!!! ");
-                        }
-                        FileOutputStream fileOutputStream = new FileOutputStream(pictureFile);
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream);
-
-                        fileOutputStream.close();
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    }
-
-                }
-
 
                 return check_items;
 
@@ -351,7 +311,7 @@ public class PopMovieFragment extends Fragment {
                                 .appendPath(PICTURE_URL_END.replace("/", ""))
                                 .build();
 
-                        imageAdapter.setmresultItems(new URL(builtUri.toString()));
+                        imageAdapter.setmresultItems(new String((new URL(builtUri.toString()).toString())));
                         //      Log.v(LOG_TAG, resultItems + "GoodLuck" + builtUri.toString());
 
                     } catch (MalformedURLException ex) {
@@ -364,16 +324,57 @@ public class PopMovieFragment extends Fragment {
         }
 
     }
+
+    public class FetchSavedFavourites extends AsyncTask<Void, Void, String[]> {
+
+        @Override
+        protected String[] doInBackground(Void... params) {
+
+            ArrayList<String> arrayList = new ArrayList<>();
+
+            MySQLiteHelper mySQLiteHelper = new MySQLiteHelper(getContext());
+            SQLiteDatabase sqLiteDatabase = mySQLiteHelper.getWritableDatabase();
+
+            String query = "SELECT * FROM MOVIE";
+            Cursor cursor = sqLiteDatabase.rawQuery(query, null);
+
+            if (cursor.moveToFirst()) {
+                do {
+                    String temp = cursor.getString(cursor.getColumnIndex("POSTERPATH"));
+                    arrayList.add(temp);
+                } while (cursor.moveToNext());
+            }
+            Log.v("check", arrayList.toString());
+
+
+            return arrayList.toArray(new String[0]);
+        }
+
+        @Override
+        protected void onPostExecute(String[] strings) {
+            if (strings != null) {
+                imageAdapter.clear();
+                for (String items : strings) {
+                    imageAdapter.setmresultItems(items);
+                }
+                imageAdapter.notifyDataSetChanged();
+            }
+        }
+    }
+
+
+
+
 }
 
 
 class ImageAdapter extends BaseAdapter {
 
     private Context mContext;
-    private ArrayList<URL> mresultItems;
+    private ArrayList<String> mresultItems;
 
 
-    public ImageAdapter(Context c, ArrayList<URL> resultItems) {
+    public ImageAdapter(Context c, ArrayList<String> resultItems) {
         mContext = c;
         mresultItems = resultItems;
 
@@ -384,7 +385,7 @@ class ImageAdapter extends BaseAdapter {
         return mresultItems.size();
     }
 
-    public URL getItem(int position) {
+    public String getItem(int position) {
         return mresultItems.get(position);
 
 
@@ -400,13 +401,14 @@ class ImageAdapter extends BaseAdapter {
     }
 
 
-    public void setmresultItems(URL resultItems) {
+    public void setmresultItems(String resultItems) {
         mresultItems.add(resultItems);
         //  Log.v("check", mresultItems.toString());
 
     }
 
     @Override
+
     public View getView(int position, View convertView, ViewGroup parent) {
         final ImageView imageView;
 
@@ -424,59 +426,10 @@ class ImageAdapter extends BaseAdapter {
         }
 
 
-        URL picUrl = getItem(position);
+        String picUrl = getItem(position);
 
 
-//        com.squareup.picasso.Target target = new com.squareup.picasso.Target() {
-//            @Override
-//
-//
-//            public void onBitmapLoaded(final Bitmap bitmap, Picasso.LoadedFrom from) {
-//
-//                new Thread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//
-//                        File pictureFile = getOutputMediaFile();
-//                        if (pictureFile == null) {
-//                            Log.v("check", "permission check kar !!!! ");
-//                            return;
-//                        }
-//                        try {
-//                            FileOutputStream fileOutputStream = new FileOutputStream(pictureFile);
-//                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream);
-//                            fileOutputStream.close();
-//
-//                        } catch (IOException ex) {
-//                            ex.printStackTrace();
-//                        }
-//
-//                    }
-//                }).start();
-//
-//
-//
-//
-//            }
-//
-//
-//            @Override
-//            public void onBitmapFailed(Drawable errorDrawable) {
-//
-//            }
-//
-//            @Override
-//            public void onPrepareLoad(Drawable placeHolderDrawable) {
-//
-//            }
-//        };
-
-
-
-
-
-
-        Picasso.with(mContext).load(picUrl.toString())
+        Picasso.with(mContext).load(picUrl)
                 .resize(185, 278)
                 .centerCrop()
                 //.placeholder(R.drawable.user_placeholder)
@@ -506,10 +459,10 @@ class ImageAdapter extends BaseAdapter {
 }
 
 class MovieObjectDetail {
-    public Map getMovieDetailsFromJson(JSONArray movieArray, URL urlcompared) throws JSONException {
+    public Map getMovieDetailsFromJson(JSONArray movieArray, String urlcompared) throws JSONException {
         Map movieObjectDetailList = new HashMap();
         //ArrayList movieObjectDetailList = new ArrayList();
-        String posterUrl = urlcompared.toString();
+        String posterUrl = urlcompared;
         int Index = posterUrl.lastIndexOf("/");
         posterUrl = posterUrl.substring(Index);
         //posterUrl = "\\"+posterUrl;
