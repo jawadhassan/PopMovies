@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -130,10 +132,13 @@ public class DetailActivityFragment extends Fragment {
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (!YoutubeURLList.isEmpty()) {
                 URL TrailerURL = YoutubeURLList.get(position);
                 // String TrailerURLString = TrailerURL.toString();
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(TrailerURL.toString()));
-                startActivity(intent);
+                    startActivity(intent);
+                }
+
 
             }
         });
@@ -177,12 +182,20 @@ public class DetailActivityFragment extends Fragment {
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String criteria = sharedPreferences.getString(getString(R.string.pref_categories), getString(R.string.pref_categories_default));
-        if (!criteria.equals("favourite")) {
+
+        if (isConnectedToInternet()) {
             FetchMovieTrailerTask fetchMovieTrailerTask = new FetchMovieTrailerTask();
             fetchMovieTrailerTask.execute(movieId, VIDEOS);
 
@@ -200,22 +213,22 @@ public class DetailActivityFragment extends Fragment {
         movieAdapter.notifyDataSetChanged();
 
 
+    }
 
+    public boolean isConnectedToInternet() {
+        boolean connected = false;
+        ConnectivityManager connectivityManager = (ConnectivityManager) getContext().getSystemService(getContext().CONNECTIVITY_SERVICE);
+        if (connectivityManager != null) {
+            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+            connected = networkInfo != null && networkInfo.isAvailable() && networkInfo.isConnected();
+            return connected;
+        }
+        return connected;
 
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    public String DetailActivityTrailerProvider() {
+        return YoutubeURLList.get(0).toString();
     }
 
 
@@ -252,10 +265,10 @@ public class DetailActivityFragment extends Fragment {
                 StringBuffer buffer = new StringBuffer();
                 if (inputStream == null) {
                     movieJsonTrailer = null;
+                } else {
+
+                    bufferedReader = new BufferedReader(new InputStreamReader(inputStream != null ? inputStream : null));
                 }
-
-                bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
                     buffer.append(line + "\n");
@@ -379,13 +392,14 @@ public class DetailActivityFragment extends Fragment {
 
                 }
 
-                bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                // Lintcorrections
+                bufferedReader = new BufferedReader(new InputStreamReader(inputStream != null ? inputStream : null));
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
                     stringBuffer.append(line + "\n");
 
                 }
-                if ((stringBuffer.length()) == 0) {
+                if ((stringBuffer != null ? stringBuffer.length() : 0) == 0) {
                     movieReviews = null;
                 }
                 movieReviews = stringBuffer.toString();

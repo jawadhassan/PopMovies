@@ -149,31 +149,37 @@ public class PopMovieFragment extends Fragment {
             ArrayList<String> movieResults = new ArrayList<>();
             String posterUrl;
             final String OWM_MOVIE_RESULTS = "results";
-            JSONObject jsonObject = new JSONObject(movieJsonStr);
-            if (jsonObject.has(OWM_MOVIE_RESULTS)) {
-                movieArray = jsonObject.getJSONArray(OWM_MOVIE_RESULTS);
+            try {
+                JSONObject jsonObject = new JSONObject(movieJsonStr);
+                if (jsonObject.has(OWM_MOVIE_RESULTS)) {
+                    movieArray = jsonObject.getJSONArray(OWM_MOVIE_RESULTS);
 
-                //JSONArray movieArray = jsonObject.getJSONArray(OWM_MOVIE_RESULTS);
+                    //JSONArray movieArray = jsonObject.getJSONArray(OWM_MOVIE_RESULTS);
 
-                for (int i = 0; i < movieArray.length(); i++) {
-                    JSONObject movieObject = movieArray.getJSONObject(i);
-                    posterUrl = movieObject.getString("poster_path");
-                    movieResults.add(posterUrl);
-                    Log.v(LOG_TAG, posterUrl);
-                }
+                    for (int i = 0; i < movieArray.length(); i++) {
+                        JSONObject movieObject = movieArray.getJSONObject(i);
+                        posterUrl = movieObject.getString("poster_path");
+                        movieResults.add(posterUrl);
+                        Log.v(LOG_TAG, posterUrl);
+                    }
 //                for (String items : movieResults){
 //                    //Log.v(LOG_TAG,items);
 //                }
 
 
-                // return null;
+                    // return null;
+                }
+
+                return movieResults.toArray(new String[0]);
+
+            } catch (Exception ex) {
+                Log.v(LOG_TAG, ex.toString());
             }
 
-            return movieResults.toArray(new String[0]);
 
 
             // Log.v(LOG_TAG,posterUrl);
-
+            return null;
 
         }
 
@@ -220,7 +226,7 @@ public class PopMovieFragment extends Fragment {
 
                     movieJsonStr = null;
                 }
-                reader = new BufferedReader(new InputStreamReader(inputstream));
+                reader = new BufferedReader(new InputStreamReader(inputstream != null ? inputstream : null));
 
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -237,7 +243,9 @@ public class PopMovieFragment extends Fragment {
 
 
             } catch (IOException e) {
+                Log.v(LOG_TAG, "Check Your Internet Connection");
                 Log.e(LOG_TAG, "error here" + e);
+
 
                 movieJsonStr = null;
             } finally {
@@ -258,43 +266,39 @@ public class PopMovieFragment extends Fragment {
             try {
                 // here will be method call for JSon parsing.
                 String[] check_items = getMovieImageFromJson(movieJsonStr);
-                ArrayList<URL> checkArrayList = new ArrayList<>();
-                for (String resultcheckItems : check_items) {
-                    try {
-                        //Log.v(LOG_TAG, resultItems + "GoodLuck");
-                        final String PICTURE_BASE_URL = "http://image.tmdb.org/t/p/w185/";
-                        final String PICTURE_URL_END = resultcheckItems;
-                        Uri builtUri = Uri.parse(PICTURE_BASE_URL).buildUpon()
-                                .appendPath(PICTURE_URL_END.replace("/", ""))
-                                .build();
+//                ArrayList<URL> checkArrayList = new ArrayList<>();
+//
+//                    try {
+//                        for (String resultcheckItems : check_items) {
+//                            //Log.v(LOG_TAG, resultItems + "GoodLuck");
+//                            final String PICTURE_BASE_URL = "http://image.tmdb.org/t/p/w185/";
+//                            final String PICTURE_URL_END = resultcheckItems;
+//                            Uri builtUri = Uri.parse(PICTURE_BASE_URL).buildUpon()
+//                                    .appendPath(PICTURE_URL_END.replace("/", ""))
+//                                    .build();
+//
+//                            checkArrayList.add(new URL(builtUri.toString()));
+//
+//
+//                            //      Log.v(LOG_TAG, resultItems + "GoodLuck" + builtUri.toString());
+//                        }
+//                    } catch (MalformedURLException ex) {
+//                        //Log.e(LOG_TAG, "onPostExecute: " );
+//                    }
 
-                        checkArrayList.add(new URL(builtUri.toString()));
-
-
-                        //      Log.v(LOG_TAG, resultItems + "GoodLuck" + builtUri.toString());
-
-                    } catch (MalformedURLException ex) {
-                        //Log.e(LOG_TAG, "onPostExecute: " );
-                    }
-
-                }
 
 
                 return check_items;
 
-            } catch (JSONException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
+            } catch (Exception e) {
+                //Log.e(LOG_TAG, e.getMessage(), e);
+                Log.v("check", "Connection Lost");
                 e.printStackTrace();
             }
             return null;
 
         }
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-        }
 
         @Override
         protected void onPostExecute(String[] result) {
