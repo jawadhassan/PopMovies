@@ -133,6 +133,8 @@ public class PopMovieFragment extends Fragment {
             FetchSavedFavourites fetchSavedFavourites = new FetchSavedFavourites();
             fetchSavedFavourites.execute();
         } else {
+
+
             movieTask.execute(criteria);
         }
     }
@@ -266,25 +268,6 @@ public class PopMovieFragment extends Fragment {
             try {
                 // here will be method call for JSon parsing.
                 String[] check_items = getMovieImageFromJson(movieJsonStr);
-//                ArrayList<URL> checkArrayList = new ArrayList<>();
-//
-//                    try {
-//                        for (String resultcheckItems : check_items) {
-//                            //Log.v(LOG_TAG, resultItems + "GoodLuck");
-//                            final String PICTURE_BASE_URL = "http://image.tmdb.org/t/p/w185/";
-//                            final String PICTURE_URL_END = resultcheckItems;
-//                            Uri builtUri = Uri.parse(PICTURE_BASE_URL).buildUpon()
-//                                    .appendPath(PICTURE_URL_END.replace("/", ""))
-//                                    .build();
-//
-//                            checkArrayList.add(new URL(builtUri.toString()));
-//
-//
-//                            //      Log.v(LOG_TAG, resultItems + "GoodLuck" + builtUri.toString());
-//                        }
-//                    } catch (MalformedURLException ex) {
-//                        //Log.e(LOG_TAG, "onPostExecute: " );
-//                    }
 
 
 

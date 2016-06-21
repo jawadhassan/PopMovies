@@ -39,14 +39,16 @@ public class DetailActivity extends AppCompatActivity {
 
             intent.putExtra(Intent.EXTRA_SUBJECT, getResources().getString(R.string.chooserstring));
             DetailActivityFragment fragment = (DetailActivityFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_detail);
+            if (fragment.DetailActivityTrailerProvider() != null) {
 
-            intent.putExtra(Intent.EXTRA_TEXT, fragment.DetailActivityTrailerProvider());
-            String Title = getResources().getString(R.string.chooserstring);
+                intent.putExtra(Intent.EXTRA_TEXT, fragment.DetailActivityTrailerProvider());
+                String Title = getResources().getString(R.string.chooserstring);
 
-            Intent chooser = Intent.createChooser(intent, Title);
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                startActivity(chooser);
-                return true;
+                Intent chooser = Intent.createChooser(intent, Title);
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(chooser);
+                    return true;
+                }
             }
         }
         return super.onOptionsItemSelected(item);

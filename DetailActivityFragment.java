@@ -3,6 +3,7 @@ package com.example.android.popmovies;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
@@ -62,6 +63,8 @@ public class DetailActivityFragment extends Fragment {
     ArrayList<String> trailerList = new ArrayList<>();
     ArrayList<URL> YoutubeURLList = new ArrayList<>();
     String picturePath;
+    MySQLiteHelper db;
+    SQLiteDatabase sqLiteDatabase;
     private MyParcelable mMovieDetail;
 
 
@@ -143,40 +146,62 @@ public class DetailActivityFragment extends Fragment {
             }
         });
 
-
         Button favbutton = (Button) rootView.findViewById(R.id.favButton);
-        favbutton.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
 
-                        Log.d("check", "ok");
-
-                        SavePictoDatabaseTask savePictoDatabaseTask = new SavePictoDatabaseTask();
-                        savePictoDatabaseTask.execute();
-
-                        MySQLiteHelper db = new MySQLiteHelper(getContext());
-                        SQLiteDatabase sqLiteDatabase = db.getWritableDatabase();
-                        ContentValues contentValues = new ContentValues();
-                        contentValues.put("VOTES", mMovieDetail.vote_average);
-                        contentValues.put("OVERVIEW", mMovieDetail.overview);
-                        contentValues.put("RELEASEDATE", mMovieDetail.release_date);
-                        contentValues.put("TITLE", mMovieDetail.title);
-                        contentValues.put("ID", Integer.parseInt(mMovieDetail.id));
+        db = new MySQLiteHelper(getContext());
+        sqLiteDatabase = db.getWritableDatabase();
 
 
-                        sqLiteDatabase.insert("MOVIE",
+        Cursor cursor = sqLiteDatabase.query("MOVIE", null,
+                "ID=?", new String[]{String.valueOf(mMovieDetail.id)}, null, null, null);
+        // Check if values are missing in database then proceed to inserting it into database and picture to application folder
 
-                                null,
-                                contentValues);
-
-                        db.close();
+        if (cursor == null) {
 
 
+            favbutton.setOnClickListener(
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+
+
+//                            MySQLiteHelper db = new MySQLiteHelper(getContext());
+//                            SQLiteDatabase sqLiteDatabase = db.getWritableDatabase();
+//
+//                            Cursor cursor = sqLiteDatabase.query("MOVIE", null,
+//                                    "ID=?", new String[]{String.valueOf(mMovieDetail.id)}, null, null, null);
+//                            // Check if values are missing in database then proceed to inserting it into database and picture to application folder
+//
+//                            if (cursor==null){
+
+                            Log.d("check", "ok");
+
+
+                            SavePictoDatabaseTask savePictoDatabaseTask = new SavePictoDatabaseTask();
+                            savePictoDatabaseTask.execute();
+
+                            ContentValues contentValues = new ContentValues();
+                            contentValues.put("VOTES", mMovieDetail.vote_average);
+                            contentValues.put("OVERVIEW", mMovieDetail.overview);
+                            contentValues.put("RELEASEDATE", mMovieDetail.release_date);
+                            contentValues.put("TITLE", mMovieDetail.title);
+                            contentValues.put("ID", Integer.parseInt(mMovieDetail.id));
+
+
+                            sqLiteDatabase.insert("MOVIE",
+
+                                    null,
+                                    contentValues);
+
+                            db.close();
+
+
+                        }
                     }
-                }
-        );
+            );
 
+
+        }
 
         return rootView;
     }
@@ -228,7 +253,10 @@ public class DetailActivityFragment extends Fragment {
     }
 
     public String DetailActivityTrailerProvider() {
-        return YoutubeURLList.get(0).toString();
+        if (!YoutubeURLList.isEmpty()) {
+            return YoutubeURLList.get(0).toString();
+        }
+        return null;
     }
 
 
